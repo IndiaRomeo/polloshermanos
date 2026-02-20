@@ -1,3 +1,4 @@
+// app/api/sales/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { getServerSession } from "next-auth/next";
@@ -23,8 +24,6 @@ export async function POST(req: Request) {
   const startDate = bogotaWeekStartUtc(date ? new Date(date) : new Date());
 
   const week = await prisma.week.findUnique({ where: { startDate } });
-
-  // ✅ si no existe semana, no puedes vender
   if (!week) {
     return NextResponse.json(
       { error: "No existe semana activa. Define inventario inicial primero." },
@@ -32,7 +31,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ Debes definir inventario primero
   if (week.initialQty <= 0) {
     return NextResponse.json(
       { error: "Primero define el inventario inicial de la semana." },
@@ -40,7 +38,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ No permitir vender más de lo disponible
   const agg = await prisma.sale.aggregate({
     where: { weekId: week.id },
     _sum: { qty: true },
@@ -48,6 +45,13 @@ export async function POST(req: Request) {
 
   const sold = agg._sum.qty ?? 0;
   const remaining = week.initialQty - sold;
+
+  if (remaining <= 0) {
+    return NextResponse.json(
+      { error: "Semana agotada. No hay pollos disponibles." },
+      { status: 400 }
+    );
+  }
 
   if (q > remaining) {
     return NextResponse.json(

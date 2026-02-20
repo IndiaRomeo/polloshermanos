@@ -64,13 +64,18 @@ export default function DashboardClient({ user }: { user: { username: string; ro
     loadCurrent();
   }, []);
 
-  const totals = useMemo(() => {
+    const totals = useMemo(() => {
+
     const sales = week?.sales ?? [];
     const sold = sales.reduce((acc, s) => acc + s.qty, 0);
     const revenue = sales.reduce((acc, s) => acc + s.qty * s.unitPrice, 0);
-    const remaining = (week?.initialQty ?? 0) - sold;
+    const remainingRaw = (week?.initialQty ?? 0) - sold;
+    const remaining = Math.max(0, remainingRaw); // nunca negativo
     return { sold, revenue, remaining };
-  }, [week]);
+
+    }, [week]);
+
+    const isSoldOut = !!week && totals.remaining <= 0;
 
   async function saveInitial() {
     setError("");
@@ -190,11 +195,19 @@ export default function DashboardClient({ user }: { user: { username: string; ro
               placeholder="Nota (opcional)"
             />
             <button
-              onClick={addSale}
-              className="rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3 cursor-pointer"
+            onClick={addSale}
+            disabled={!week || isSoldOut}
+            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3 cursor-pointer
+                ${(!week || isSoldOut) ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              Agregar
+            Agregar
             </button>
+            {week && isSoldOut && (
+            <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+                Semana agotada: ya no hay pollos disponibles. Para continuar, inicia la nueva semana cuando corresponda.
+            </div>
+            )}
+            
           </div>
 
           {error && (

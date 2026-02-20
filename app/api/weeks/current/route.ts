@@ -1,25 +1,9 @@
+// app/api/weeks/current/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/lib/auth";
 import { bogotaWeekStartUtc } from "@/app/lib/time";
-
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-
-  const startDate = bogotaWeekStartUtc();
-
-  // Auto-crea la semana si no existe
-  const week = await prisma.week.upsert({
-    where: { startDate },
-    update: {},
-    create: { startDate, initialQty: 0 },
-    include: { sales: true },
-  });
-
-  return NextResponse.json({ startDate, week });
-}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -34,9 +18,30 @@ export async function POST(req: Request) {
 
   const startDate = bogotaWeekStartUtc();
 
+  // 1) Trae semana (si existe)
+  const existing = await prisma.week.findUnique({ where: { startDate } });
+
+  // 2) Si ya existe, calcula vendido y no dejes bajar de lo vendido
+  if (existing) {
+    const agg = await prisma.sale.aggregate({
+      where: { weekId: existing.id },
+      _sum: { qty: true },
+    });
+
+    const sold = agg._sum.qty ?? 0;
+
+    if (initialQty < sold) {
+      return NextResponse.json(
+        { error: `No puedes poner inventario ${initialQty}. Ya vendiste ${sold}.` },
+        { status: 400 }
+      );
+    }
+  }
+
+  // 3) Upsert normal
   const week = await prisma.week.upsert({
     where: { startDate },
-    update: { initialQty }, // si ya existe, lo actualiza
+    update: { initialQty },
     create: { startDate, initialQty },
   });
 
