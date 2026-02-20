@@ -62,13 +62,18 @@ model VerificationToken {
 
 model Week {
   id         String   @id @default(cuid())
-  startDate  DateTime // inicio de semana (Lunes 00:00 Bogotá convertido a UTC)
+  startDate  DateTime @unique
   initialQty Int
-  createdAt  DateTime @default(now())
+  status     WeekStatus @default(OPEN)
+  closedAt   DateTime?
 
   sales      Sale[]
+  createdAt  DateTime @default(now())
+}
 
-  @@unique([startDate])
+enum WeekStatus {
+  OPEN
+  CLOSED
 }
 
 model Sale {
