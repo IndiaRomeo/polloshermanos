@@ -20,11 +20,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unitPrice inválido" }, { status: 400 });
   }
 
-  // la venta se asocia a la semana activa (Bogotá)
   const startDate = bogotaWeekStartUtc(date ? new Date(date) : new Date());
 
   const week = await prisma.week.findUnique({ where: { startDate } });
-  // Debes definir inventario primero
+
+  // ✅ si no existe semana, no puedes vender
+  if (!week) {
+    return NextResponse.json(
+      { error: "No existe semana activa. Define inventario inicial primero." },
+      { status: 400 }
+    );
+  }
+
+  // ✅ Debes definir inventario primero
   if (week.initialQty <= 0) {
     return NextResponse.json(
       { error: "Primero define el inventario inicial de la semana." },
@@ -32,7 +40,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // No permitir vender más de lo disponible
+  // ✅ No permitir vender más de lo disponible
   const agg = await prisma.sale.aggregate({
     where: { weekId: week.id },
     _sum: { qty: true },

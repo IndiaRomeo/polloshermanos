@@ -2,10 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-  const [history, setHistory] = useState<
-    { id: string; startDate: string; initialQty: number; sold: number; remaining: number; revenue: number }[]
-  >([]);
-
 type Sale = {
   id: string;
   date: string;
@@ -21,14 +17,29 @@ type Week = {
   sales: Sale[];
 };
 
-const days = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"] as const;
+type WeekHistoryRow = {
+  id: string;
+  startDate: string;
+  initialQty: number;
+  sold: number;
+  remaining: number;
+  revenue: number;
+};
 
 function formatCOP(n: number) {
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 export default function DashboardClient({ user }: { user: { username: string; role: string } }) {
   const [week, setWeek] = useState<Week | null>(null);
+
+  // ✅ AQUÍ va history (dentro del componente)
+  const [history, setHistory] = useState<WeekHistoryRow[]>([]);
+
   const [initialQty, setInitialQty] = useState<number>(0);
   const [qty, setQty] = useState<number>(1);
   const [unitPrice, setUnitPrice] = useState<number>(50000);
@@ -40,6 +51,7 @@ export default function DashboardClient({ user }: { user: { username: string; ro
 
     const res = await fetch("/api/weeks/current", { cache: "no-store" });
     const data = await res.json();
+
     setWeek(data.week ?? null);
     if (data.week?.initialQty != null) setInitialQty(data.week.initialQty);
 
@@ -195,15 +207,21 @@ export default function DashboardClient({ user }: { user: { username: string; ro
           <div className="mt-6">
             <h3 className="text-sm font-bold text-white/80">Ventas registradas</h3>
             <div className="mt-2 space-y-2">
-              {(week?.sales ?? []).slice().reverse().map((s) => (
-                <div key={s.id} className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 flex justify-between">
-                  <div className="text-sm">
-                    <span className="font-bold">{s.qty}</span> × {formatCOP(s.unitPrice)}
-                    {s.note ? <span className="text-white/50"> — {s.note}</span> : null}
+              {(week?.sales ?? [])
+                .slice()
+                .reverse()
+                .map((s) => (
+                  <div
+                    key={s.id}
+                    className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 flex justify-between"
+                  >
+                    <div className="text-sm">
+                      <span className="font-bold">{s.qty}</span> × {formatCOP(s.unitPrice)}
+                      {s.note ? <span className="text-white/50"> — {s.note}</span> : null}
+                    </div>
+                    <div className="font-bold">{formatCOP(s.qty * s.unitPrice)}</div>
                   </div>
-                  <div className="font-bold">{formatCOP(s.qty * s.unitPrice)}</div>
-                </div>
-              ))}
+                ))}
               {(week?.sales ?? []).length === 0 && (
                 <div className="text-white/50 text-sm">Aún no hay ventas registradas.</div>
               )}
@@ -211,45 +229,45 @@ export default function DashboardClient({ user }: { user: { username: string; ro
           </div>
         </div>
 
-        {/* Historial (siguiente paso) */}
+        {/* Historial */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
-            <div className="flex items-center justify-between">
-                <h2 className="font-bold">Historial por semanas</h2>
-                <span className="text-xs text-white/50">Últimas 20</span>
-            </div>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold">Historial por semanas</h2>
+            <span className="text-xs text-white/50">Últimas 20</span>
+          </div>
 
-            <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-sm">
-                <thead className="text-white/60">
-                    <tr className="border-b border-white/10">
-                    <th className="py-2 text-left">Semana</th>
-                    <th className="py-2 text-right">Inicial</th>
-                    <th className="py-2 text-right">Vendidos</th>
-                    <th className="py-2 text-right">Restante</th>
-                    <th className="py-2 text-right">Ingresos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {history.map((w) => (
-                    <tr key={w.id} className="border-b border-white/5">
-                        <td className="py-2">{new Date(w.startDate).toISOString().slice(0, 10)}</td>
-                        <td className="py-2 text-right">{w.initialQty}</td>
-                        <td className="py-2 text-right">{w.sold}</td>
-                        <td className="py-2 text-right">{w.remaining}</td>
-                        <td className="py-2 text-right font-bold">{formatCOP(w.revenue)}</td>
-                    </tr>
-                    ))}
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-white/60">
+                <tr className="border-b border-white/10">
+                  <th className="py-2 text-left">Semana</th>
+                  <th className="py-2 text-right">Inicial</th>
+                  <th className="py-2 text-right">Vendidos</th>
+                  <th className="py-2 text-right">Restante</th>
+                  <th className="py-2 text-right">Ingresos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((w) => (
+                  <tr key={w.id} className="border-b border-white/5">
+                    <td className="py-2">{new Date(w.startDate).toISOString().slice(0, 10)}</td>
+                    <td className="py-2 text-right">{w.initialQty}</td>
+                    <td className="py-2 text-right">{w.sold}</td>
+                    <td className="py-2 text-right">{w.remaining}</td>
+                    <td className="py-2 text-right font-bold">{formatCOP(w.revenue)}</td>
+                  </tr>
+                ))}
 
-                    {history.length === 0 && (
-                    <tr>
-                        <td colSpan={5} className="py-3 text-white/50">
-                        Aún no hay semanas registradas.
-                        </td>
-                    </tr>
-                    )}
-                </tbody>
-                </table>
-            </div>
+                {history.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-white/50">
+                      Aún no hay semanas registradas.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
