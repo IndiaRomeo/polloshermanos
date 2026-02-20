@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SELLER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(SELLER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Week {
+  id         String   @id @default(cuid())
+  startDate  DateTime // inicio de semana (Lunes 00:00 Bogotá convertido a UTC)
+  initialQty Int
+  createdAt  DateTime @default(now())
+
+  sales      Sale[]
+
+  @@unique([startDate])
+}
+
+model Sale {
+  id        String   @id @default(cuid())
+  weekId    String
+  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  date      DateTime // fecha/hora real del registro
+  qty       Int
+  unitPrice Int
+  note      String?
+  createdAt DateTime @default(now())
+}
