@@ -191,7 +191,7 @@ export default function DashboardClient({ user }: { user: { username: string; ro
             />
             <button
               onClick={addSale}
-              className="rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3"
+              className="rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3 cursor-pointer"
             >
               Agregar
             </button>
