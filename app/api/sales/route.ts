@@ -24,9 +24,26 @@ export async function POST(req: Request) {
   const startDate = bogotaWeekStartUtc(date ? new Date(date) : new Date());
 
   const week = await prisma.week.findUnique({ where: { startDate } });
-  if (!week) {
+  // Debes definir inventario primero
+  if (week.initialQty <= 0) {
     return NextResponse.json(
-      { error: "No existe semana activa. Define inventario inicial primero." },
+      { error: "Primero define el inventario inicial de la semana." },
+      { status: 400 }
+    );
+  }
+
+  // No permitir vender más de lo disponible
+  const agg = await prisma.sale.aggregate({
+    where: { weekId: week.id },
+    _sum: { qty: true },
+  });
+
+  const sold = agg._sum.qty ?? 0;
+  const remaining = week.initialQty - sold;
+
+  if (q > remaining) {
+    return NextResponse.json(
+      { error: `No puedes vender ${q}. Solo quedan ${remaining} pollos.` },
       { status: 400 }
     );
   }

@@ -9,8 +9,12 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const startDate = bogotaWeekStartUtc();
-  const week = await prisma.week.findUnique({
+
+  // Auto-crea la semana si no existe
+  const week = await prisma.week.upsert({
     where: { startDate },
+    update: {},
+    create: { startDate, initialQty: 0 },
     include: { sales: true },
   });
 

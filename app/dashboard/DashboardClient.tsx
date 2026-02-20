@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+  const [history, setHistory] = useState<
+    { id: string; startDate: string; initialQty: number; sold: number; remaining: number; revenue: number }[]
+  >([]);
+
 type Sale = {
   id: string;
   date: string;
@@ -33,10 +37,15 @@ export default function DashboardClient({ user }: { user: { username: string; ro
 
   async function loadCurrent() {
     setError("");
+
     const res = await fetch("/api/weeks/current", { cache: "no-store" });
     const data = await res.json();
     setWeek(data.week ?? null);
     if (data.week?.initialQty != null) setInitialQty(data.week.initialQty);
+
+    const res2 = await fetch("/api/weeks", { cache: "no-store" });
+    const data2 = await res2.json();
+    setHistory(data2.weeks ?? []);
   }
 
   useEffect(() => {
@@ -203,8 +212,44 @@ export default function DashboardClient({ user }: { user: { username: string; ro
         </div>
 
         {/* Historial (siguiente paso) */}
-        <div className="mt-6 text-white/60 text-sm">
-          Historial por semanas: lo conectamos en el siguiente paso con un endpoint `/api/weeks` y una tabla bonita.
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+                <h2 className="font-bold">Historial por semanas</h2>
+                <span className="text-xs text-white/50">Últimas 20</span>
+            </div>
+
+            <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-sm">
+                <thead className="text-white/60">
+                    <tr className="border-b border-white/10">
+                    <th className="py-2 text-left">Semana</th>
+                    <th className="py-2 text-right">Inicial</th>
+                    <th className="py-2 text-right">Vendidos</th>
+                    <th className="py-2 text-right">Restante</th>
+                    <th className="py-2 text-right">Ingresos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {history.map((w) => (
+                    <tr key={w.id} className="border-b border-white/5">
+                        <td className="py-2">{new Date(w.startDate).toISOString().slice(0, 10)}</td>
+                        <td className="py-2 text-right">{w.initialQty}</td>
+                        <td className="py-2 text-right">{w.sold}</td>
+                        <td className="py-2 text-right">{w.remaining}</td>
+                        <td className="py-2 text-right font-bold">{formatCOP(w.revenue)}</td>
+                    </tr>
+                    ))}
+
+                    {history.length === 0 && (
+                    <tr>
+                        <td colSpan={5} className="py-3 text-white/50">
+                        Aún no hay semanas registradas.
+                        </td>
+                    </tr>
+                    )}
+                </tbody>
+                </table>
+            </div>
         </div>
       </div>
     </main>
