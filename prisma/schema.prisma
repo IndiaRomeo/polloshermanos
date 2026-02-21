@@ -68,6 +68,7 @@ model Week {
   closedAt   DateTime?
 
   sales      Sale[]
+  restocks   Restock[]   //agrega esto
   createdAt  DateTime @default(now())
 }
 
@@ -84,6 +85,16 @@ model Sale {
   date      DateTime // fecha/hora real del registro
   qty       Int
   unitPrice Int
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Restock {
+  id        String   @id @default(cuid())
+  weekId    String
+  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  qty       Int
   note      String?
   createdAt DateTime @default(now())
 }

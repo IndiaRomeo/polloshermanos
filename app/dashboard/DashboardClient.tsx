@@ -240,13 +240,14 @@ async function loadCurrent() {
             >
             Agregar
             </button>
-            {week && isSoldOut && (
+
+          </div>
+
+          {week && isSoldOut && (
             <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
                 Semana agotada: ya no hay pollos disponibles. Para continuar, inicia la nueva semana cuando corresponda.
             </div>
             )}
-
-          </div>
 
           {error && (
             <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
