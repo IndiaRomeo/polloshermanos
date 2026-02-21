@@ -281,46 +281,52 @@ async function loadCurrent() {
 
         {/* Recargar inventario */}
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
-        <h2 className="font-bold">Recargar inventario</h2>
-        <p className="text-white/60 text-sm mt-1">
+          <h2 className="font-bold">Recargar inventario</h2>
+          <p className="text-white/60 text-sm mt-1">
             Si llegaron más pollos durante la semana, agrégalos aquí. Esto suma al stock disponible.
-        </p>
+          </p>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <input
-            type="number"
-            value={rechargeQty}
-            onChange={(e) => setRechargeQty(Number(e.target.value))}
-            disabled={!week}
-            className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+              type="number"
+              value={rechargeQty}
+              onChange={(e) => setRechargeQty(Number(e.target.value))}
+              disabled={!week || week.status === "CLOSED"}
+              className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
                 focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
-                ${!week ? "opacity-50 cursor-not-allowed" : ""}`}
-            placeholder="Cantidad a recargar"
+                ${(!week || week.status === "CLOSED") ? "opacity-50 cursor-not-allowed" : ""}`}
+              placeholder="Cantidad a recargar"
             />
 
             <input
-            value={rechargeNote}
-            onChange={(e) => setRechargeNote(e.target.value)}
-            disabled={!week}
-            className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+              value={rechargeNote}
+              onChange={(e) => setRechargeNote(e.target.value)}
+              disabled={!week || week.status === "CLOSED"}
+              className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
                 focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
-                ${!week ? "opacity-50 cursor-not-allowed" : ""}`}
-            placeholder="Nota (opcional)"
+                ${(!week || week.status === "CLOSED") ? "opacity-50 cursor-not-allowed" : ""}`}
+              placeholder="Nota (opcional)"
             />
 
             <button
-            onClick={recharge}
-            disabled={!week || rechargeQty <= 0}
-            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
-                ${(!week || rechargeQty <= 0) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              onClick={recharge}
+              disabled={!week || week.status === "CLOSED" || rechargeQty <= 0}
+              className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
+                ${(!week || week.status === "CLOSED" || rechargeQty <= 0) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
             >
-            Recargar
+              Recargar
             </button>
-        </div>
+          </div>
+
+          {week?.status === "CLOSED" && (
+            <div className="mt-3 text-sm text-white/50">
+              Semana cerrada. No se pueden hacer recargas.
+            </div>
+          )}
         </div>
 
         {/* Registrar venta */}
-        {week?.status === "CLOSED" ? null : (
+        {week && week.status !== "CLOSED" ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
             <h2 className="font-bold">Registrar venta</h2>
 
@@ -359,7 +365,7 @@ async function loadCurrent() {
             </div>
 
             {week && isSoldOut && (
-              <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+              <div className="mt-4 w-full rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
                 Semana agotada: ya no hay pollos disponibles. Para continuar, inicia la nueva semana cuando corresponda.
               </div>
             )}
@@ -396,7 +402,7 @@ async function loadCurrent() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Historial */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
