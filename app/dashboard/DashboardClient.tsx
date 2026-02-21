@@ -320,8 +320,18 @@ async function loadCurrent() {
         </div>
 
         {/* Registrar venta */}
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
-          <h2 className="font-bold">Registrar venta</h2>
+        {week && week.status === "CLOSED" ? (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
+            <h2 className="font-bold">Registrar venta</h2>
+            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
+              Semana cerrada. No se pueden registrar ventas.
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ✅ TU BLOQUE COMPLETO DE "Registrar venta" VA AQUÍ TAL CUAL */}
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
+              <h2 className="font-bold">Registrar venta</h2>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
             <input
