@@ -26,9 +26,10 @@ export async function POST(req: Request) {
   // 1) Traer semana + recargas
   const week = await prisma.week.findUnique({
     where: { startDate },
-    include: { restocks: true }, // ⚠️ CONFIRMA que tu relación se llama "restocks"
+    include: { adjustments: true },
   });
 
+  // ✅ primero valida que exista
   if (!week) {
     return NextResponse.json(
       { error: "No existe semana activa. Define inventario inicial primero." },
@@ -36,18 +37,19 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2) Bloquear ventas si la semana está cerrada (si tienes status)
-  if ((week as any).status === "CLOSED") {
-    return NextResponse.json({ error: "Semana cerrada. No puedes registrar ventas." }, { status: 400 });
+  // 2) Bloquear ventas si la semana está cerrada
+  if (week.status === "CLOSED") {
+    return NextResponse.json(
+      { error: "Semana cerrada. No puedes registrar ventas." },
+      { status: 400 }
+    );
   }
 
-  // 3) Sumatoria de recargas
-  const totalRestocked = (week.restocks ?? []).reduce((a, r) => a + (r.qty ?? 0), 0);
+  // 3) Calcular disponible total = inicial + recargas
+  const totalRestocked = week.adjustments.reduce((a, r) => a + r.qty, 0);
+  const available = week.initialQty + totalRestocked;
 
-  // 4) Total disponible real
-  const available = (week.initialQty ?? 0) + totalRestocked;
-
-  // 5) Vendidos
+  // 4) Vendidos
   const agg = await prisma.sale.aggregate({
     where: { weekId: week.id },
     _sum: { qty: true },
@@ -57,7 +59,10 @@ export async function POST(req: Request) {
   const remaining = available - sold;
 
   if (remaining <= 0) {
-    return NextResponse.json({ error: "Semana agotada. No hay pollos disponibles." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Semana agotada. No hay pollos disponibles." },
+      { status: 400 }
+    );
   }
 
   if (q > remaining) {
@@ -67,7 +72,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // 6) Crear venta
+  // 5) Crear venta
   const sale = await prisma.sale.create({
     data: {
       weekId: week.id,

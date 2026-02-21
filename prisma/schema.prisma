@@ -69,7 +69,6 @@ model Week {
 
   sales      Sale[]
   adjustments StockAdjustment[]  //NUEVO
-  restocks   Restock[]   //agrega esto
   createdAt  DateTime @default(now())
 }
 
