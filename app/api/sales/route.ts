@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
   if (q > remaining) {
     return NextResponse.json(
-      { error: `No puedes vender ${q}. Solo quedan ${remaining} pollos.` },
+      { error: `No puedes vender ${q}. Solo quedan ${remaining} pollo(s).` },
       { status: 400 }
     );
   }
