@@ -61,15 +61,16 @@ model VerificationToken {
 }
 
 model Week {
-  id         String   @id @default(cuid())
-  startDate  DateTime @unique
+  id         String     @id @default(cuid())
+  startDate  DateTime   @unique
   initialQty Int
   status     WeekStatus @default(OPEN)
   closedAt   DateTime?
 
-  sales      Sale[]
-  adjustments StockAdjustment[]  //NUEVO
-  createdAt  DateTime @default(now())
+  sales       Sale[]
+  adjustments StockAdjustment[]
+
+  createdAt DateTime @default(now())
 }
 
 enum WeekStatus {
@@ -78,9 +79,9 @@ enum WeekStatus {
 }
 
 model Sale {
-  id        String   @id @default(cuid())
-  weekId    String
-  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  weekId String
+  week   Week   @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
   date      DateTime // fecha/hora real del registro
   qty       Int
@@ -89,21 +90,12 @@ model Sale {
   createdAt DateTime @default(now())
 }
 
-model Restock {
-  id        String   @id @default(cuid())
-  weekId    String
-  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
-
-  qty       Int
-  note      String?
-  createdAt DateTime @default(now())
-}
 model StockAdjustment {
-  id        String   @id @default(cuid())
-  weekId    String
-  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  weekId String
+  week   Week   @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
-  qty       Int      // cantidad recargada (positiva)
+  qty       Int // cantidad recargada (positiva)
   note      String?
   createdAt DateTime @default(now())
 }
