@@ -5,6 +5,19 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/lib/auth";
 import { bogotaWeekStartUtc } from "@/app/lib/time";
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const startDate = bogotaWeekStartUtc();
+  const week = await prisma.week.findUnique({
+    where: { startDate },
+    include: { sales: true },
+  });
+
+  return NextResponse.json({ startDate, week });
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
@@ -18,16 +31,13 @@ export async function POST(req: Request) {
 
   const startDate = bogotaWeekStartUtc();
 
-  // 1) Trae semana (si existe)
+  // si ya existe, no permitir bajar por debajo de lo vendido
   const existing = await prisma.week.findUnique({ where: { startDate } });
-
-  // 2) Si ya existe, calcula vendido y no dejes bajar de lo vendido
   if (existing) {
     const agg = await prisma.sale.aggregate({
       where: { weekId: existing.id },
       _sum: { qty: true },
     });
-
     const sold = agg._sum.qty ?? 0;
 
     if (initialQty < sold) {
@@ -38,7 +48,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // 3) Upsert normal
   const week = await prisma.week.upsert({
     where: { startDate },
     update: { initialQty },
