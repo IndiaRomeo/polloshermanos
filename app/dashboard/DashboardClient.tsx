@@ -114,6 +114,7 @@ async function loadCurrent() {
     }, [week]);
 
     const isSoldOut = !!week && totals.remaining <= 0;
+    const canSetInitial = !week; // solo se define inventario si NO existe semana aún
 
   async function saveInitial() {
     setError("");
@@ -188,19 +189,28 @@ async function loadCurrent() {
 
           <div className="mt-4 flex flex-col md:flex-row gap-3">
             <input
-              type="number"
-              value={initialQty}
-              onChange={(e) => setInitialQty(Number(e.target.value))}
-              className="w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
-                         focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
-              placeholder="Inventario inicial"
+            type="number"
+            value={initialQty}
+            onChange={(e) => setInitialQty(Number(e.target.value))}
+            disabled={!canSetInitial}
+            className={`w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none cursor-pointer
+                        focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
+                        ${!canSetInitial ? "opacity-50 cursor-not-allowed" : ""}`}
+            placeholder="Inventario inicial"
             />
             <button
-              onClick={saveInitial}
-              className="rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3 cursor-pointer"
+            onClick={saveInitial}
+            disabled={!canSetInitial}
+            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
+                        ${!canSetInitial ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
             >
-              Guardar inventario semanal
+            Guardar inventario semanal
             </button>
+            {!canSetInitial && (
+            <div className="mt-3 text-sm text-white/50">
+                Inventario inicial bloqueado para esta semana. Si llegan más pollos, usa “Recarga”.
+            </div>
+            )}
           </div>
         </div>
 
