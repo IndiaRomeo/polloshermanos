@@ -193,9 +193,9 @@ async function loadCurrent() {
             value={initialQty}
             onChange={(e) => setInitialQty(Number(e.target.value))}
             disabled={!canSetInitial}
-            className={`w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none cursor-pointer
-                        focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
-                        ${!canSetInitial ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+            focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
+            ${!canSetInitial ? "opacity-50 cursor-not-allowed" : ""}`}
             placeholder="Inventario inicial"
             />
             <button
@@ -206,12 +206,12 @@ async function loadCurrent() {
             >
             Guardar inventario semanal
             </button>
-            {!canSetInitial && (
+          </div>
+          {!canSetInitial && (
             <div className="mt-3 text-sm text-white/50">
                 Inventario inicial bloqueado para esta semana. Si llegan más pollos, usa “Recarga”.
             </div>
             )}
-          </div>
         </div>
 
         {/* Registrar venta */}
