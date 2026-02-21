@@ -158,19 +158,33 @@ async function loadCurrent() {
     await loadCurrent();
   }
 
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  function openCloseModal() {
+    setShowCloseModal(true);
+  }
+
   async function closeWeek() {
     if (!week) return;
 
-    const ok = confirm("¿Seguro que deseas CERRAR la semana? Esto bloqueará ventas y recargas.");
-    if (!ok) return;
+    try {
+      setClosing(true);
+      setError("");
 
-    setError("");
-    const res = await fetch("/api/weeks/close", { method: "POST" });
-    const data = await res.json();
+      const res = await fetch("/api/weeks/close", { method: "POST" });
+      const data = await safeJson(res);
 
-    if (!res.ok) return setError(data.error || "Error cerrando semana");
+      if (!res.ok) {
+        setError(data?.error || "Error cerrando semana");
+        return;
+      }
 
-    await loadCurrent();
+      setShowCloseModal(false);
+      await loadCurrent();
+    } finally {
+      setClosing(false);
+    }
   }
 
   async function recharge() {
@@ -260,7 +274,7 @@ async function loadCurrent() {
               {/* BOTÓN CERRAR SEMANA */}
               {user.role === "ADMIN" && week && week.status === "OPEN" && (
                 <button
-                  onClick={closeWeek}
+                  onClick={openCloseModal}
                   className="rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 font-bold px-5 py-3 cursor-pointer hover:bg-red-500/20 transition"
                 >
                   Cerrar semana
@@ -403,6 +417,36 @@ async function loadCurrent() {
             </div>
           </div>
         ) : null}
+
+
+        {showCloseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-950/90 backdrop-blur p-6 shadow-2xl">
+            <h3 className="text-lg font-bold">Cerrar semana</h3>
+            <p className="mt-2 text-sm text-white/70">
+              Al cerrar la semana se bloquearán <b>ventas</b> y <b>recargas</b>. Esta acción no se puede deshacer.
+            </p>
+
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowCloseModal(false)}
+                disabled={closing}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white/80 hover:bg-white/10 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={closeWeek}
+                disabled={closing}
+                className="rounded-xl bg-red-500/90 px-4 py-2 font-bold text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {closing ? "Cerrando..." : "Sí, cerrar semana"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Historial */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
