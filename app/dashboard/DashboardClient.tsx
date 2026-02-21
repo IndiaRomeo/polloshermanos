@@ -21,8 +21,9 @@ type Week = {
   id: string;
   startDate: string;
   initialQty: number;
+  status: "OPEN" | "CLOSED"; //agrega esto
   sales: Sale[];
-  adjustments?: Adjustment[]; // esto es lo nuevo
+  adjustments?: Adjustment[];
 };
 
 type WeekHistoryRow = {
@@ -157,6 +158,21 @@ async function loadCurrent() {
     await loadCurrent();
   }
 
+  async function closeWeek() {
+    if (!week) return;
+
+    const ok = confirm("¿Seguro que deseas CERRAR la semana? Esto bloqueará ventas y recargas.");
+    if (!ok) return;
+
+    setError("");
+    const res = await fetch("/api/weeks/close", { method: "POST" });
+    const data = await res.json();
+
+    if (!res.ok) return setError(data.error || "Error cerrando semana");
+
+    await loadCurrent();
+  }
+
   async function recharge() {
     setError("");
 
@@ -221,29 +237,45 @@ async function loadCurrent() {
           </p>
 
           <div className="mt-4 flex flex-col md:flex-row gap-3">
-            <input
-            type="number"
-            value={initialQty}
-            onChange={(e) => setInitialQty(Number(e.target.value))}
-            disabled={!canSetInitial}
-            className={`w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
-            focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
-            ${!canSetInitial ? "opacity-50 cursor-not-allowed" : ""}`}
-            placeholder="Inventario inicial"
-            />
-            <button
-            onClick={saveInitial}
-            disabled={!canSetInitial}
-            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
-                        ${!canSetInitial ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-            >
-            Guardar inventario semanal
-            </button>
-          </div>
+              <input
+                type="number"
+                value={initialQty}
+                onChange={(e) => setInitialQty(Number(e.target.value))}
+                disabled={!canSetInitial}
+                className={`w-full md:w-64 rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
+                ${!canSetInitial ? "opacity-50 cursor-not-allowed" : ""}`}
+                placeholder="Inventario inicial"
+              />
+
+              <button
+                onClick={saveInitial}
+                disabled={!canSetInitial}
+                className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
+                  ${!canSetInitial ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                Guardar inventario semanal
+              </button>
+
+              {/* BOTÓN CERRAR SEMANA */}
+              {user.role === "ADMIN" && week && week.status === "OPEN" && (
+                <button
+                  onClick={closeWeek}
+                  className="rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 font-bold px-5 py-3 cursor-pointer hover:bg-red-500/20 transition"
+                >
+                  Cerrar semana
+                </button>
+              )}
+            </div>
           {!canSetInitial && (
             <div className="mt-3 text-sm text-white/50">
                 Inventario inicial bloqueado para esta semana. Si llegan más pollos, usa “Recarga”.
             </div>
+            )}
+            {week && week.status === "CLOSED" && (
+              <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
+                Semana cerrada. Ventas y recargas están bloqueadas.
+              </div>
             )}
         </div>
 
