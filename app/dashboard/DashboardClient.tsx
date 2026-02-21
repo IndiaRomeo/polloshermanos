@@ -10,11 +10,19 @@ type Sale = {
   note?: string | null;
 };
 
+type Adjustment = {
+  id: string;
+  qty: number;
+  note?: string | null;
+  createdAt: string;
+};
+
 type Week = {
   id: string;
   startDate: string;
   initialQty: number;
   sales: Sale[];
+  adjustments?: Adjustment[]; // esto es lo nuevo
 };
 
 type WeekHistoryRow = {
@@ -45,6 +53,9 @@ export default function DashboardClient({ user }: { user: { username: string; ro
   const [unitPrice, setUnitPrice] = useState<number>(50000);
   const [note, setNote] = useState<string>("");
   const [error, setError] = useState<string>("");
+
+  const [rechargeQty, setRechargeQty] = useState<number>(0);
+  const [rechargeNote, setRechargeNote] = useState<string>("");
 
 async function safeJson(res: Response) {
   const text = await res.text();
@@ -103,14 +114,18 @@ async function loadCurrent() {
   }, []);
 
     const totals = useMemo(() => {
-
     const sales = week?.sales ?? [];
+    const adjustments = (week as any)?.adjustments ?? [];
+
     const sold = sales.reduce((acc, s) => acc + s.qty, 0);
     const revenue = sales.reduce((acc, s) => acc + s.qty * s.unitPrice, 0);
-    const remainingRaw = (week?.initialQty ?? 0) - sold;
-    const remaining = Math.max(0, remainingRaw); // nunca negativo
-    return { sold, revenue, remaining };
+    const recharged = adjustments.reduce((acc: number, a: any) => acc + a.qty, 0);
 
+    const available = (week?.initialQty ?? 0) + recharged;
+    const remainingRaw = available - sold;
+    const remaining = Math.max(0, remainingRaw);
+
+    return { sold, revenue, remaining, recharged, available };
     }, [week]);
 
     const isSoldOut = !!week && totals.remaining <= 0;
@@ -141,6 +156,23 @@ async function loadCurrent() {
     setNote("");
     await loadCurrent();
   }
+
+  async function recharge() {
+    setError("");
+
+    const res = await fetch("/api/weeks/recharge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qty: rechargeQty, note: rechargeNote }),
+    });
+
+    const data = await safeJson(res);
+    if (!res.ok) return setError(data?.error || "Error recargando inventario");
+
+    setRechargeQty(0);
+    setRechargeNote("");
+    await loadCurrent();
+    }
 
   return (
     <main className="app-bg min-h-screen text-white p-6">
@@ -212,6 +244,46 @@ async function loadCurrent() {
                 Inventario inicial bloqueado para esta semana. Si llegan más pollos, usa “Recarga”.
             </div>
             )}
+        </div>
+
+        {/* Recargar inventario */}
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
+        <h2 className="font-bold">Recargar inventario</h2>
+        <p className="text-white/60 text-sm mt-1">
+            Si llegaron más pollos durante la semana, agrégalos aquí. Esto suma al stock disponible.
+        </p>
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+            type="number"
+            value={rechargeQty}
+            onChange={(e) => setRechargeQty(Number(e.target.value))}
+            disabled={!week}
+            className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
+                ${!week ? "opacity-50 cursor-not-allowed" : ""}`}
+            placeholder="Cantidad a recargar"
+            />
+
+            <input
+            value={rechargeNote}
+            onChange={(e) => setRechargeNote(e.target.value)}
+            disabled={!week}
+            className={`rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20
+                ${!week ? "opacity-50 cursor-not-allowed" : ""}`}
+            placeholder="Nota (opcional)"
+            />
+
+            <button
+            onClick={recharge}
+            disabled={!week || rechargeQty <= 0}
+            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
+                ${(!week || rechargeQty <= 0) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+            Recargar
+            </button>
+        </div>
         </div>
 
         {/* Registrar venta */}

@@ -12,8 +12,11 @@ export async function GET() {
 
   const week = await prisma.week.findUnique({
     where: { startDate },
-    include: { sales: true, restocks: true },
-  });
+    include: {
+        sales: true,
+        adjustments: true, // obligatorio
+    },
+    });
 
   return NextResponse.json({ startDate, week });
 }
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
 
   const existing = await prisma.week.findUnique({ where: { startDate } });
 
-  // ✅ SI YA EXISTE, BLOQUEAMOS EDICIÓN
+  // SI YA EXISTE, BLOQUEAMOS EDICIÓN
   if (existing) {
     return NextResponse.json(
       { error: "El inventario inicial ya fue definido para esta semana. Usa Recarga si llegan más pollos." },
