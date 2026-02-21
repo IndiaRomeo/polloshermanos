@@ -12,11 +12,11 @@ export async function GET() {
 
   const week = await prisma.week.findUnique({
     where: { startDate },
-    include: {
-        sales: true,
-        adjustments: true, // obligatorio
+    include: { 
+      sales: true,
+      adjustments: true, // ✅ si tu relación se llama así
     },
-    });
+  });
 
   return NextResponse.json({ startDate, week });
 }
