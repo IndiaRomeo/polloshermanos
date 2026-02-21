@@ -320,91 +320,83 @@ async function loadCurrent() {
         </div>
 
         {/* Registrar venta */}
-        {week && week.status === "CLOSED" ? (
+        {week?.status === "CLOSED" ? null : (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
             <h2 className="font-bold">Registrar venta</h2>
-            <div className="mt-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white/70">
-              Semana cerrada. No se pueden registrar ventas.
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+              <input
+                type="number"
+                value={qty}
+                onChange={(e) => setQty(Number(e.target.value))}
+                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                          focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
+                placeholder="Cantidad"
+              />
+              <input
+                type="number"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(Number(e.target.value))}
+                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                          focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
+                placeholder="Precio unitario (COP)"
+              />
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
+                          focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
+                placeholder="Nota (opcional)"
+              />
+              <button
+                onClick={addSale}
+                disabled={!week || isSoldOut}
+                className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3
+                  ${(!week || isSoldOut) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                Agregar
+              </button>
             </div>
-          </div>
-        ) : (
-          <>
-            {/* ✅ TU BLOQUE COMPLETO DE "Registrar venta" VA AQUÍ TAL CUAL */}
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
-              <h2 className="font-bold">Registrar venta</h2>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-            <input
-              type="number"
-              value={qty}
-              onChange={(e) => setQty(Number(e.target.value))}
-              className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
-                         focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
-              placeholder="Cantidad"
-            />
-            <input
-              type="number"
-              value={unitPrice}
-              onChange={(e) => setUnitPrice(Number(e.target.value))}
-              className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
-                         focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
-              placeholder="Precio unitario (COP)"
-            />
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 outline-none
-                         focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
-              placeholder="Nota (opcional)"
-            />
-            <button
-            onClick={addSale}
-            disabled={!week || isSoldOut}
-            className={`rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 text-black font-bold px-5 py-3 cursor-pointer
-                ${(!week || isSoldOut) ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-            Agregar
-            </button>
-
-          </div>
-
-          {week && isSoldOut && (
-            <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+            {week && isSoldOut && (
+              <div className="mt-4 rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
                 Semana agotada: ya no hay pollos disponibles. Para continuar, inicia la nueva semana cuando corresponda.
-            </div>
+              </div>
             )}
 
-          {error && (
-            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {error}
+              </div>
+            )}
 
-          {/* Lista simple */}
-          <div className="mt-6">
-            <h3 className="text-sm font-bold text-white/80">Ventas registradas</h3>
-            <div className="mt-2 space-y-2">
-              {(week?.sales ?? [])
-                .slice()
-                .reverse()
-                .map((s) => (
-                  <div
-                    key={s.id}
-                    className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 flex justify-between"
-                  >
-                    <div className="text-sm">
-                      <span className="font-bold">{s.qty}</span> × {formatCOP(s.unitPrice)}
-                      {s.note ? <span className="text-white/50"> — {s.note}</span> : null}
+            {/* Lista simple */}
+            <div className="mt-6">
+              <h3 className="text-sm font-bold text-white/80">Ventas registradas</h3>
+              <div className="mt-2 space-y-2">
+                {(week?.sales ?? [])
+                  .slice()
+                  .reverse()
+                  .map((s) => (
+                    <div
+                      key={s.id}
+                      className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 flex justify-between"
+                    >
+                      <div className="text-sm">
+                        <span className="font-bold">{s.qty}</span> × {formatCOP(s.unitPrice)}
+                        {s.note ? <span className="text-white/50"> — {s.note}</span> : null}
+                      </div>
+                      <div className="font-bold">{formatCOP(s.qty * s.unitPrice)}</div>
                     </div>
-                    <div className="font-bold">{formatCOP(s.qty * s.unitPrice)}</div>
-                  </div>
-                ))}
-              {(week?.sales ?? []).length === 0 && (
-                <div className="text-white/50 text-sm">Aún no hay ventas registradas.</div>
-              )}
+                  ))}
+
+                {(week?.sales ?? []).length === 0 && (
+                  <div className="text-white/50 text-sm">Aún no hay ventas registradas.</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Historial */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl">
