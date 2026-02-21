@@ -46,19 +46,57 @@ export default function DashboardClient({ user }: { user: { username: string; ro
   const [note, setNote] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  async function loadCurrent() {
-    setError("");
-
-    const res = await fetch("/api/weeks/current", { cache: "no-store" });
-    const data = await res.json();
-
-    setWeek(data.week ?? null);
-    if (data.week?.initialQty != null) setInitialQty(data.week.initialQty);
-
-    const res2 = await fetch("/api/weeks", { cache: "no-store" });
-    const data2 = await res2.json();
-    setHistory(data2.weeks ?? []);
+async function safeJson(res: Response) {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Respuesta no JSON (${res.status}): ${text.slice(0, 200)}`);
   }
+}
+
+async function loadCurrent() {
+  setError("");
+
+  try {
+    const res = await fetch("/api/weeks/current", {
+      cache: "no-store",
+      credentials: "include",
+    });
+
+    const data = await safeJson(res);
+
+    if (!res.ok) {
+      setWeek(null);
+      setHistory([]);
+      setError(data?.error || `Error /api/weeks/current (${res.status})`);
+      return;
+    }
+
+    setWeek(data?.week ?? null);
+    if (data?.week?.initialQty != null) setInitialQty(data.week.initialQty);
+
+    const res2 = await fetch("/api/weeks", {
+      cache: "no-store",
+      credentials: "include",
+    });
+
+    const data2 = await safeJson(res2);
+
+    if (!res2.ok) {
+      setHistory([]);
+      setError(data2?.error || `Error /api/weeks (${res2.status})`);
+      return;
+    }
+
+    setHistory(data2?.weeks ?? []);
+  } catch (e: any) {
+    setWeek(null);
+    setHistory([]);
+    setError(e?.message || "Error inesperado cargando datos");
+  }
+}
 
   useEffect(() => {
     loadCurrent();
@@ -207,7 +245,7 @@ export default function DashboardClient({ user }: { user: { username: string; ro
                 Semana agotada: ya no hay pollos disponibles. Para continuar, inicia la nueva semana cuando corresponda.
             </div>
             )}
-            
+
           </div>
 
           {error && (
