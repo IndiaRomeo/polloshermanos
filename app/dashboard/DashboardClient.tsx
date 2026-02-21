@@ -197,9 +197,10 @@ async function loadCurrent() {
         </div>
 
         {/* Resumen */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card title="Inventario inicial" value={week ? `${week.initialQty} pollos` : "—"} />
-          <Card title="Vendidos (semana)" value={week ? `${totals.sold} pollos` : "—"} />
+          <Card title="Recargados (semana)" value={week ? `${totals.recharged} pollos` : "—"} />
+          <Card title="Disponible total" value={week ? `${totals.available} pollos` : "—"} />
           <Card title="Stock restante" value={week ? `${totals.remaining} pollos` : "—"} />
         </div>
 
